@@ -19,9 +19,6 @@ func main() {
 
 	gormDB := db.GetDB(conf)
 	authRepo := db.NewAuthRepo(gormDB)
-	if err != nil {
-		log.Fatalf("error retrieving client for push notification\n%v", errr)
-	}
 	authService := services.NewAuthService(authRepo, conf)
 
 	s := &server.Server{
@@ -31,3 +28,4 @@ func main() {
 	}
 	s.Start()
 }
+
