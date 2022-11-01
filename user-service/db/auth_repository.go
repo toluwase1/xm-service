@@ -21,8 +21,6 @@ type AuthRepository interface {
 	TokenInBlacklist(token string) bool
 	VerifyEmail(email string, token string) error
 	IsTokenInBlacklist(token string) error
-	UpdatePassword(password string, email string) error
-	DeleteUserByEmail(email string) error
 }
 
 type authRepo struct {
@@ -116,40 +114,6 @@ func (a *authRepo) IsTokenInBlacklist(token string) error {
 	}
 	if count > 0 {
 		return fmt.Errorf("token expired, request a new link")
-	}
-	return nil
-}
-
-func (a *authRepo) UpdatePassword(password string, email string) error {
-	err := a.DB.Model(&models.User{}).Where("email = ?", email).Updates(models.User{HashedPassword: password}).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *authRepo) DeleteUserByEmail(email string) error {
-	user := &models.User{}
-	err := a.DB.Where("email = ?", email).Find(user).Error
-	if err != nil {
-		return fmt.Errorf("could not find user to delete: %v", err)
-	}
-	err = a.DB.Delete(&models.Medication{}, "user_id = ?", user.ID).Error
-	if err != nil {
-		return fmt.Errorf("could not delete user's medication: %v", err)
-	}
-	err = a.DB.Delete(&models.MedicationHistory{}, "user_id = ?", user.ID).Error
-	if err != nil {
-		return fmt.Errorf("could not delete user's medication history: %v", err)
-	}
-	err = a.DB.Delete(&models.BlackList{}, "email = ?", user.Email).Error
-	if err != nil {
-		return fmt.Errorf("could not delete user's medication: %v", err)
-	}
-
-	err = a.DB.Delete(&models.User{}, "email = ?", email).Error
-	if err != nil {
-		return fmt.Errorf("could not delete user: %v", err)
 	}
 	return nil
 }

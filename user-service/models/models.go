@@ -64,3 +64,16 @@ type LoginResponse struct {
 	UserResponse
 	AccessToken string
 }
+
+// LoginUserToDto responsible for creating a response object for the handleLogin handler
+func (u *User) LoginUserToDto(token string) *LoginResponse {
+	return &LoginResponse{
+		UserResponse: UserResponse{
+			ID:          u.ID,
+			Name:        u.Name,
+			PhoneNumber: u.PhoneNumber,
+			Email:       u.Email,
+		},
+		AccessToken: token,
+	}
+}

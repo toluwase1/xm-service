@@ -9,18 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"user-service/config"
 	"user-service/db"
 	"user-service/services"
 )
 
 // Server serves requests to DB with router
 type Server struct {
-	Config                   *config.Config
-	AuthRepository           db.AuthRepository
-	AuthService              services.AuthService
-	MedicationService        services.MedicationService
-	MedicationHistoryService services.MedicationHistoryService
-	PushNotification         services.PushNotifier
+	Config         *config.Config
+	AuthRepository db.AuthRepository
+	AuthService    services.AuthService
 }
 
 func (s *Server) Start() {

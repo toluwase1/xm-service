@@ -3,12 +3,14 @@ package services
 import (
 	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"user-service/config"
 	"user-service/db"
 	apiError "user-service/errors"
 	"user-service/models"
+	"user-service/server/jwt"
 )
 
 //go:generate mockgen -destination=../mocks/auth_mock.go -package=mocks github.com/decagonhq/meddle-api/services AuthService
@@ -20,10 +22,8 @@ type AuthService interface {
 
 // authService struct
 type authService struct {
-	Config           *config.Config
-	authRepo         db.AuthRepository
-	mail             Mailer
-	pushNotification PushNotifier
+	Config   *config.Config
+	authRepo db.AuthRepository
 }
 
 // NewAuthService instantiate an authService
@@ -51,13 +51,13 @@ func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Err
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
 
-	token, err := jwt.GenerateToken(user.Email, a.Config.JWTSecret)
+	_, err = jwt.GenerateToken(user.Email, a.Config.JWTSecret)
 	if err != nil {
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
-	if err := a.sendVerifyEmail(token, user.Email); err != nil {
-		return nil, err
-	}
+	//if err := a.sendVerifyEmail(token, user.Email); err != nil {
+	//	return nil, err
+	//}
 
 	user.Password = ""
 	user.IsEmailActive = false
@@ -86,9 +86,9 @@ func (a *authService) LoginUser(loginRequest *models.LoginRequest) (*models.Logi
 		return nil, apiError.New("email not verified", http.StatusUnauthorized)
 	}
 
-	if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
-		return nil, apiError.ErrInvalidPassword
-	}
+	//if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
+	//	return nil, apiError.ErrInvalidPassword
+	//}
 
 	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret)
 	if err != nil {
