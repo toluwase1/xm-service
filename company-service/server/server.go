@@ -18,7 +18,7 @@ import (
 type Server struct {
 	Config         *config.Config
 	AuthRepository db.AuthRepository
-	AuthService    services.AuthService
+	AuthService    services.CompanyService
 }
 
 func (s *Server) Start() {

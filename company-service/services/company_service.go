@@ -5,64 +5,46 @@ import (
 	"company-service/db"
 	apiError "company-service/errors"
 	"company-service/models"
-	"company-service/server/jwt"
 	"log"
 	"net/http"
 )
 
 //go:generate mockgen -destination=../mocks/auth_mock.go -package=mocks github.com/decagonhq/meddle-api/services AuthService
-// AuthService interface
-type AuthService interface {
-	SignupUser(request *models.Company) (*models.Company, *apiError.Error)
+// CompanyService interface
+type CompanyService interface {
+	CreateCompany(request *models.Company) (*models.Company, *apiError.Error)
 }
 
-// authService struct
-type authService struct {
+// companyService struct
+type companyService struct {
 	Config   *config.Config
 	authRepo db.AuthRepository
 }
 
-// NewAuthService instantiate an authService
-func NewAuthService(authRepo db.AuthRepository, conf *config.Config) AuthService {
-	return &authService{
+// NewCompanyService instantiate an companyService
+func NewCompanyService(authRepo db.AuthRepository, conf *config.Config) CompanyService {
+	return &companyService{
 		Config:   conf,
 		authRepo: authRepo,
 	}
 }
 
-func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Error) {
-	err := a.authRepo.IsEmailExist(user.Email)
+func (a *companyService) CreateCompany(company *models.Company) (*models.Company, *apiError.Error) {
+	err := a.authRepo.IsCompanyNameExist(company.Name)
 	if err != nil {
-		return nil, apiError.New("email already exist", http.StatusBadRequest)
+		return nil, apiError.New("company name already exist, please choose another name", http.StatusBadRequest)
 	}
+	validTypes := []string{"Corporations", "NonProfit", "Cooperative", "Sole Proprietorship"}
 
-	err = a.authRepo.IsPhoneExist(user.PhoneNumber)
-	if err != nil {
-		return nil, apiError.New("phone already exist", http.StatusBadRequest)
+	for i := 0; i < len(validTypes); i++ {
+		if company.Type != validTypes[i] {
+			return nil, apiError.New("Please provide a valid Type", http.StatusBadRequest)
+		}
 	}
-
-	user.HashedPassword, err = GenerateHashPassword(user.Password)
+	company, err = a.authRepo.CreateCompany(company)
 	if err != nil {
-		log.Printf("error generating password hash: %v", err.Error())
+		log.Printf("unable to create company: %v", err.Error())
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
-
-	_, err = jwt.GenerateToken(user.Email, a.Config.JWTSecret)
-	if err != nil {
-		return nil, apiError.New("internal server error", http.StatusInternalServerError)
-	}
-	//if err := a.sendVerifyEmail(token, user.Email); err != nil {
-	//	return nil, err
-	//}
-
-	user.Password = ""
-	user.IsEmailActive = false
-	user, err = a.authRepo.CreateUser(user)
-
-	if err != nil {
-		log.Printf("unable to create user: %v", err.Error())
-		return nil, apiError.New("internal server error", http.StatusInternalServerError)
-	}
-
-	return user, nil
+	return company, nil
 }

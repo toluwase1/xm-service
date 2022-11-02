@@ -7,6 +7,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/leebenson/conform"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -14,7 +15,7 @@ type User struct {
 	Name           string `json:"name" binding:"required,min=2"`
 	Email          string `json:"email" gorm:"unique;not null" binding:"required,email"`
 	PhoneNumber    string `json:"phone_number" gorm:"unique;default:null" binding:"required,e164"`
-	Password       string `json:"password,omitempty" gorm:"-" binding:"required,min=8,max=15"`
+	Password       string `json:"password" gorm:"-" binding:"required,min=8,max=15"`
 	HashedPassword string `json:"-" gorm:"password"`
 	IsEmailActive  bool   `json:"-"`
 }
@@ -76,4 +77,9 @@ func (u *User) LoginUserToDto(token string) *LoginResponse {
 		},
 		AccessToken: token,
 	}
+}
+
+// VerifyPassword verifies the collected password with the user's hashed password
+func (u *User) VerifyPassword(password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(password))
 }

@@ -11,12 +11,10 @@ import (
 
 //go:generate mockgen -destination=../mocks/auth_repo_mock.go -package=mocks github.com/decagonhq/meddle-api/db AuthRepository
 type AuthRepository interface {
-	CreateUser(user *models.User) (*models.User, error)
 	CreateCompany(user *models.Company) (*models.Company, error)
-	IsEmailExist(email string) error
-	FindUserByUsername(username string) (*models.User, error)
-	FindUserByEmail(email string) (*models.User, error)
-	UpdateUser(user *models.User) error
+	IsCompanyNameExist(name string) error
+	FindCompanyByName(email string) (*models.Company, error)
+	UpdateCompany(user *models.Company) error
 }
 
 type authRepo struct {
@@ -27,17 +25,17 @@ func NewAuthRepo(db *GormDB) AuthRepository {
 	return &authRepo{db.DB}
 }
 
-func (a *authRepo) CreateUser(user *models.User) (*models.User, error) {
-	err := a.DB.Create(user).Error
+func (a *authRepo) CreateCompany(company *models.Company) (*models.Company, error) {
+	err := a.DB.Create(company).Error
 	if err != nil {
-		return nil, fmt.Errorf("could not create user: %v", err)
+		return nil, fmt.Errorf("could not create company: %v", err)
 	}
-	return user, nil
+	return company, nil
 }
 
-func (a *authRepo) FindUserByUsername(username string) (*models.User, error) {
+func (a *authRepo) FindCompanyByName(username string) (*models.Company, error) {
 	db := a.DB
-	user := &models.User{}
+	user := &models.Company{}
 	err := db.Where("email = ? OR username = ?", username, username).First(user).Error
 	if err != nil {
 		return nil, fmt.Errorf("could not find user: %v", err)
@@ -45,39 +43,18 @@ func (a *authRepo) FindUserByUsername(username string) (*models.User, error) {
 	return user, nil
 }
 
-func (a *authRepo) IsEmailExist(email string) error {
+func (a *authRepo) IsCompanyNameExist(name string) error {
 	var count int64
-	err := a.DB.Model(&models.User{}).Where("email = ?", email).Count(&count).Error
+	err := a.DB.Model(&models.Company{}).Where("name = ?", name).Count(&count).Error
 	if err != nil {
 		return errors.Wrap(err, "gorm.count error")
 	}
 	if count > 0 {
-		return fmt.Errorf("email already in use")
+		return fmt.Errorf("name already in use")
 	}
 	return nil
 }
 
-func (a *authRepo) IsPhoneExist(phone string) error {
-	var count int64
-	err := a.DB.Model(&models.User{}).Where("phone_number = ?", phone).Count(&count).Error
-	if err != nil {
-		return errors.Wrap(err, "gorm.count error")
-	}
-	if count > 0 {
-		return fmt.Errorf("phone number already in use")
-	}
-	return nil
-}
-
-func (a *authRepo) FindUserByEmail(email string) (*models.User, error) {
-	var user models.User
-	err := a.DB.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (a *authRepo) UpdateUser(user *models.User) error {
+func (a *authRepo) UpdateCompany(user *models.Company) error {
 	return nil
 }

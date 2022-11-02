@@ -50,24 +50,17 @@ func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Err
 		log.Printf("error generating password hash: %v", err.Error())
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
-
-	_, err = jwt.GenerateToken(user.Email, a.Config.JWTSecret)
+	_, err = jwt.GenerateToken(user.Email, "aVeryLongSecret")
 	if err != nil {
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
-	//if err := a.sendVerifyEmail(token, user.Email); err != nil {
-	//	return nil, err
-	//}
-
 	user.Password = ""
-	user.IsEmailActive = false
+	user.IsEmailActive = true
 	user, err = a.authRepo.CreateUser(user)
-
 	if err != nil {
 		log.Printf("unable to create user: %v", err.Error())
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
-
 	return user, nil
 }
 
@@ -86,11 +79,11 @@ func (a *authService) LoginUser(loginRequest *models.LoginRequest) (*models.Logi
 		return nil, apiError.New("email not verified", http.StatusUnauthorized)
 	}
 
-	//if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
-	//	return nil, apiError.ErrInvalidPassword
-	//}
+	if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
+		return nil, apiError.ErrInvalidPassword
+	}
 
-	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret)
+	accessToken, err := jwt.GenerateToken(foundUser.Email, "aVeryLongSecret")
 	if err != nil {
 		log.Printf("error generating token %s", err)
 		return nil, apiError.ErrInternalServerError

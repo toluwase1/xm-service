@@ -1,6 +1,10 @@
 package main
 
 import (
+	"company-service/config"
+	"company-service/db"
+	"company-service/server"
+	"company-service/services"
 	"log"
 	"net/http"
 	"time"
@@ -12,14 +16,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	gormDB := db.GetDB(conf)
 	authRepo := db.NewAuthRepo(gormDB)
 	if err != nil {
-		log.Fatalf("error retrieving client for push notification\n%v", errr)
+		log.Fatalf("error retrieving client for push notification\n%v", err)
 	}
-	authService := services.NewAuthService(authRepo, conf)
-
+	authService := services.NewCompanyService(authRepo, conf)
 	s := &server.Server{
 		Config:         conf,
 		AuthRepository: authRepo,

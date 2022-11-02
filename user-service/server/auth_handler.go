@@ -20,7 +20,7 @@ func (s *Server) HandleSignup() gin.HandlerFunc {
 			err.Respond(c)
 			return
 		}
-		response.JSON(c, "Signup successful, check your email for verification", http.StatusCreated, userResponse, nil)
+		response.JSON(c, "Signup successful", http.StatusCreated, userResponse, nil)
 	}
 }
 
